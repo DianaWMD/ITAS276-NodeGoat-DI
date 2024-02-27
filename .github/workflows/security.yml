@@ -65,7 +65,7 @@ jobs:
       - name: Upload Semgrep report as pipeline artifact
         uses: actions/upload-artifact@v3
         with:
-          name: semgrep-report
+          name: semgrep-report.sarif
           path: semgrep.sarif
           
   sca-snyk:
@@ -86,6 +86,6 @@ jobs:
       - name: Save Snyk report as pipeline artifact
         uses: actions/upload-artifact@v3
         with:
-          name: snyk-report
+          name: snyk-report.sarif
           path: snyk.sarif
 
