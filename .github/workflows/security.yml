@@ -52,8 +52,8 @@ jobs:
 
       - name: Run Semgrep for SAST
         uses: returntocorp/semgrep-action@v1
-        with:
-          config: p/security-audit 
+        # with:
+          # config: p/security-audit 
           # generateSarif: "true"
       - name: full scan
         run: |
