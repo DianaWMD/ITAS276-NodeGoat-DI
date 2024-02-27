@@ -55,6 +55,12 @@ jobs:
         with:
           config: p/security-audit 
           # generateSarif: "true"
+      - name: full scan
+        run: |
+            semgrep \
+            --sarif --output semgrep-sast-report.sarif \
+            --metrics=off \
+            --config="p/default"
 
       - name: Upload Semgrep report as pipeline artifact
         uses: actions/upload-artifact@v3
