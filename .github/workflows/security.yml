@@ -87,5 +87,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: snyk-sca.sarif
-          path: snyk-sca.sarif
+          path: snyk.sarif
 
