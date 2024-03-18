@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/nodegoat:latest
 
   trufflehog:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -40,7 +40,7 @@ jobs:
         extra_args: --only-verified
 
   sca-snyk:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [build-and-push, trufflehog]
     steps:
       - uses: actions/checkout@v3
@@ -60,7 +60,7 @@ jobs:
           path: snyk.sarif
 
   sast-semgrep:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [build-and-push, trufflehog]
 
     container:
