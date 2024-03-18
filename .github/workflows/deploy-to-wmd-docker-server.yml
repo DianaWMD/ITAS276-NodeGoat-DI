@@ -17,5 +17,5 @@ jobs:
 
       - name: Test files are visible
         run: |
-          whoami
-          ls -lah
+            docker-compose build
+            docker-compose up -d
