@@ -58,7 +58,7 @@ jobs:
       - name: full scan
         run: |
             semgrep \
-            --sarif --output semgrep-sast-report.sarif \
+            --sarif --output semgrep-sast.sarif \
             --metrics=off \
             --config="p/default"
 
