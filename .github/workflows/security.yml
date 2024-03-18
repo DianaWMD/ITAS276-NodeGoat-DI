@@ -41,7 +41,7 @@ jobs:
 
   sca-snyk:
     runs-on: ubuntu-latest
-    needs: [trufflehog]
+    needs: [build-and-push, trufflehog]
     steps:
       - uses: actions/checkout@v3
       
@@ -56,7 +56,7 @@ jobs:
       - name: Save Snyk report as pipeline artifact
         uses: actions/upload-artifact@v3
         with:
-          name: snyk.sarif
+          name: snyk-sca.sarif
           path: snyk.sarif
 
   sast-semgrep:
