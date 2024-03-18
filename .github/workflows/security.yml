@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-and-push, trufflehog]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
       
       - name: Run Snyk to check Docker image for vulnerabilities
         continue-on-error: true
