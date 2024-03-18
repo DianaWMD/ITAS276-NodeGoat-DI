@@ -80,7 +80,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          image: ${{ secrets.DOCKER_USERNAME }}/nodegoat:latest
+          image: dianka8/nodegoat:latest
           args: --file=Dockerfile
       - name: Save Snyk report as pipeline artifact
         uses: actions/upload-artifact@v3
