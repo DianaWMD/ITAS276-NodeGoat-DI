@@ -70,7 +70,7 @@ jobs:
           
   sca-snyk:
     runs-on: ubuntu-latest
-    needs: [build-and-push, trufflehog]
+    needs: [trufflehog]
     steps:
       - uses: actions/checkout@v3
       
