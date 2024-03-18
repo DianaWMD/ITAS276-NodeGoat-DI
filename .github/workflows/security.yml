@@ -76,7 +76,7 @@ jobs:
       
       - name: Run Snyk to check Docker image for vulnerabilities
         continue-on-error: true
-        uses: snyk/actions/docker@master
+        uses: snyk/actions/docker@main
         with:
           image: ${{ secrets.DOCKER_USERNAME }}/nodegoat:latest
           args: --file=Dockerfile
