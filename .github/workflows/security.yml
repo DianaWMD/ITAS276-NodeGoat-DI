@@ -77,9 +77,6 @@ jobs:
       - name: Run Snyk to check Docker image for vulnerabilities
         continue-on-error: true
         uses: snyk/actions/docker@master
-        with:
-          image: ${{ secrets.DOCKER_USERNAME }}/nodegoat:latest
-          args: --file=Dockerfile
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       
