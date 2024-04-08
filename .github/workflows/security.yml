@@ -7,7 +7,20 @@ on:
     branches: ["main"]
 
 jobs:
+  start-notification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Pipeline Start
+        uses: ./.github/workflows/discord-notifications.yml
+        with:
+          status: "CI Pipeline Started"
+          message: "The CI pipeline for Node GOAT has begun."
+          artifact_url: ''
+        secrets:
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+
   build-and-push:
+    needs: start-notification
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -26,25 +39,33 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/nodegoat:latest
+      
+      - name: Notify Build Complete
+        uses: ./.github/workflows/discord-notifications.yml
+        with:
+            status: 'Build and Push Complete'
+            message: 'Docker image has been built and pushed.'
+        secrets:
+            discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
 
   trufflehog:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Secret Scanning
-      uses: trufflesecurity/trufflehog@main
-      with:
-        extra_args: --only-verified
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Secret Scanning
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
 
   sca-snyk:
     runs-on: ubuntu-latest
     needs: [build-and-push, trufflehog]
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Run Snyk to check Docker image for vulnerabilities
         continue-on-error: true
         uses: snyk/actions/docker@master
@@ -54,7 +75,7 @@ jobs:
           image: ${{ secrets.DOCKER_USERNAME }}/nodegoat:latest
           args: --file=Dockerfile
       - name: Save Snyk report as pipeline artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: snyk-sca.sarif
           path: snyk.sarif
@@ -73,20 +94,31 @@ jobs:
       - name: Run Semgrep for SAST
         uses: returntocorp/semgrep-action@v1
         # with:
-          # config: p/security-audit 
-          # generateSarif: "true"
+        # config: p/security-audit
+        # generateSarif: "true"
       - name: full scan
         run: |
-            semgrep \
-            --sarif --output semgrep-sast.sarif \
-            --metrics=off \
-            --config="p/default"
+          semgrep \
+          --sarif --output semgrep-sast.sarif \
+          --metrics=off \
+          --config="p/default"
 
       - name: Upload Semgrep report as pipeline artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: semgrep-sast.sarif
           path: semgrep-sast.sarif
-          
 
-
+      completion-notification:
+        needs: [build-and-push] # Adjust as needed to ensure this is the last job.
+        runs-on: ubuntu-latest
+        steps:
+          # Posts a message to Discord when the workflow completes, including SARIF report link
+          - name: Notify Pipeline Completion
+            uses: ./.github/workflows/discord-notifications.yml
+            with:
+              status: 'CI Pipeline Completed'
+              message: 'The CI pipeline for Node GOAT is complete. Check the Actions tab for the SARIF reports under "Artifacts".'
+              artifact_url: semgrep-sast.sarif
+            secrets:
+              discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}

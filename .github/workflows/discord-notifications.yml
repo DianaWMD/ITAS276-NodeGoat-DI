@@ -1,7 +1,21 @@
 name: Pipeline Notifications
 
 on:
-    workflow_dispatch:
+    workflow_call:
+      inputs:
+        status:
+          required: true
+          type: string
+        message:
+          required: true
+          type: string
+        artifact_url:
+          required: false
+          type: string
+      secrets:
+        discord_webhook:
+          required: true
+
 jobs:
     # Post a message to the ITAS Discord channel with pipeline updates.
     Discord-Begin:
@@ -12,9 +26,9 @@ jobs:
           with:
             webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
             username: ${{ github.repository }}
-            avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
-            embed-title: "Security Pipeline jobs are starting... 🚀"
-            embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            avatar-url: https://avatars.githubusercontent.com/u/122417174?v=4
+            embed-title: ${{ inputs.status }}
+            embed-url: ${{ inputs.artifact_url }}
+            embed-description:  ${{ inputs.message }}
             embed-author-name: "${{ github.triggering_actor }}"
   
