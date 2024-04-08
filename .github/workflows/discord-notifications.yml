@@ -1,34 +1,34 @@
-name: Pipeline Notifications
+# name: Pipeline Notifications
 
-on:
-    workflow_call:
-      inputs:
-        status:
-          required: true
-          type: string
-        message:
-          required: true
-          type: string
-        artifact_url:
-          required: false
-          type: string
-      secrets:
-        discord_webhook:
-          required: true
+# on:
+#     workflow_call:
+#       inputs:
+#         status:
+#           required: true
+#           type: string
+#         message:
+#           required: true
+#           type: string
+#         artifact_url:
+#           required: false
+#           type: string
+#       secrets:
+#         discord_webhook:
+#           required: true
 
-jobs:
-    # Post a message to the ITAS Discord channel with pipeline updates.
-    Discord-Begin:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Discord Notification start
-          uses: tsickert/discord-webhook@v5.3.0
-          with:
-            webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-            username: ${{ github.repository }}
-            avatar-url: https://avatars.githubusercontent.com/u/122417174?v=4
-            embed-title: ${{ inputs.status }}
-            embed-url: ${{ inputs.artifact_url }}
-            embed-description:  ${{ inputs.message }}
-            embed-author-name: "${{ github.triggering_actor }}"
+# jobs:
+#     # Post a message to the ITAS Discord channel with pipeline updates.
+#     Discord-Begin:
+#       runs-on: ubuntu-latest
+#       steps:
+#         - name: Discord Notification start
+#           uses: tsickert/discord-webhook@v5.3.0
+#           with:
+#             webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+#             username: ${{ github.repository }}
+#             avatar-url: https://avatars.githubusercontent.com/u/122417174?v=4
+#             embed-title: ${{ inputs.status }}
+#             embed-url: ${{ inputs.artifact_url }}
+#             embed-description:  ${{ inputs.message }}
+#             embed-author-name: "${{ github.triggering_actor }}"
   

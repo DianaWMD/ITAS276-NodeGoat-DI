@@ -7,22 +7,38 @@ on:
     branches: ["main"]
 
 jobs:
-  start-notification:
+  # Post a message to the ITAS Discord channel with pipeline updates.
+  # This is a notification job to indicate the start of the workflow.
+  Discord-Begin:
     runs-on: ubuntu-latest
     steps:
-      - name: Notify Pipeline Start
-        uses: ./.github/workflows/discord-notifications.yml
-        with:
-          status: "CI Pipeline Started"
-          message: "The CI pipeline for Node GOAT has begun."
-          artifact_url: ''
-        secrets:
-          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+    - name: Discord Notification start
+      uses: tsickert/discord-webhook@v5.3.0
+      with:
+        webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+        username: ${{github.repository}}
+        avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
+        embed-title: "Security Pipeline jobs are starting... 🚀"
+        embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+        embed-author-name: "${{ github.triggering_actor }}"
 
   build-and-push:
-    needs: start-notification
     runs-on: ubuntu-latest
+    needs: Discord-Begin
     steps:
+      # Steps for building and pushing Docker image...
+      - name: Notify Build Start
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          username: ${{github.repository}}
+          avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g 
+          content: "Build and push Docker image stage has started. #itas-276-github-alerts"
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          embed-author-name: "${{ github.triggering_actor }}"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -39,33 +55,49 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/nodegoat:latest
-      
-      - name: Notify Build Complete
-        uses: ./.github/workflows/discord-notifications.yml
-        with:
-            status: 'Build and Push Complete'
-            message: 'Docker image has been built and pushed.'
-        secrets:
-            discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
 
   trufflehog:
     runs-on: ubuntu-latest
+    needs: Discord-Begin
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Secret Scanning
-        uses: trufflesecurity/trufflehog@main
-        with:
-          extra_args: --only-verified
+    # Notification for starting TruffleHog scan.
+    - name: Notify Trufflehog Scan Start
+      uses: tsickert/discord-webhook@v5.3.0
+      with:
+        webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+        username: ${{github.repository}}
+        avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g 
+        embed-title: "Starting secret scanning with TruffleHog."
+        embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+        embed-author-name: "${{ github.triggering_actor }}"
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Secret Scanning
+      uses: trufflesecurity/trufflehog@main
+      with:
+        extra_args: --only-verified
 
   sca-snyk:
     runs-on: ubuntu-latest
-    needs: [build-and-push, trufflehog]
+    needs: [Discord-Begin, build-and-push, trufflehog]
     steps:
-      - uses: actions/checkout@v3
+      # Notification for starting Snyk vulnerability scan.
+      - name: Notify Snyk Scan Start
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          username: ${{github.repository}}
+          avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
+          embed-title: "Starting Snyk scan for vulnerabilities."
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          embed-author-name: "${{ github.triggering_actor }}"
 
+      - uses: actions/checkout@v3
       - name: Run Snyk to check Docker image for vulnerabilities
         continue-on-error: true
         uses: snyk/actions/docker@master
@@ -82,26 +114,38 @@ jobs:
 
   sast-semgrep:
     runs-on: ubuntu-latest
-    needs: [build-and-push, trufflehog]
+    needs: [Discord-Begin, build-and-push, trufflehog]
 
     container:
       # A Docker image with Semgrep installed. Do not change this.
       image: returntocorp/semgrep
 
     steps:
+      # Notification for starting Semgrep scan for Static Application Security Testing (SAST).
+      - name: Notify Semgrep Scan Start
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          username: ${{github.repository}}
+          avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
+          embed-title: "Starting Semgrep scan for SAST."
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          embed-author-name: "${{ github.triggering_actor }}"
+
       - uses: actions/checkout@v4
 
       - name: Run Semgrep for SAST
         uses: returntocorp/semgrep-action@v1
         # with:
-        # config: p/security-audit
-        # generateSarif: "true"
+          # config: p/security-audit 
+          # generateSarif: "true"
       - name: full scan
         run: |
-          semgrep \
-          --sarif --output semgrep-sast.sarif \
-          --metrics=off \
-          --config="p/default"
+            semgrep \
+            --sarif --output semgrep-sast.sarif \
+            --metrics=off \
+            --config="p/default"
 
       - name: Upload Semgrep report as pipeline artifact
         uses: actions/upload-artifact@v4
@@ -109,16 +153,39 @@ jobs:
           name: semgrep-sast.sarif
           path: semgrep-sast.sarif
 
-      completion-notification:
-        needs: [build-and-push] # Adjust as needed to ensure this is the last job.
-        runs-on: ubuntu-latest
-        steps:
-          # Posts a message to Discord when the workflow completes, including SARIF report link
-          - name: Notify Pipeline Completion
-            uses: ./.github/workflows/discord-notifications.yml
-            with:
-              status: 'CI Pipeline Completed'
-              message: 'The CI pipeline for Node GOAT is complete. Check the Actions tab for the SARIF reports under "Artifacts".'
-              artifact_url: semgrep-sast.sarif
-            secrets:
-              discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+  # Notification with a link to download the SARIF output file.        
+  fetch-and-post-artifact-link:
+    runs-on: ubuntu-latest
+    needs: [sast-semgrep] 
+    steps:
+      - name: Fetch Artifact URL
+        id: fetch_artifact
+        run: |
+          ARTIFACTS_JSON=$(curl -s -H "Authorization: token ${{ secrets.TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts")
+          ARTIFACT_URL=$(echo $ARTIFACTS_JSON | jq -r '.artifacts[0].archive_download_url')
+          echo "::set-output name=ARTIFACT_URL::$ARTIFACT_URL"
+
+      - name: Post Artifact Link to Discord
+        if: steps.fetch_artifact.outputs.ARTIFACT_URL != ''
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d "{\"content\": \"Here is the latest artifact: ${steps.fetch_artifact.outputs.ARTIFACT_URL}\"}" \
+               ${{ secrets.DISCORD_WEBHOOK }}
+
+  # Final notification to indicate the workflow has completed.
+  notify-complete:
+    needs: [fetch-and-post-artifact-link] 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Workflow Completion Notification
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          username: ${{github.repository}}
+          avatar-url: "https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g"
+          embed-title: "CI for Node GOAT workflow has completed."
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          embed-author-name: "${{ github.triggering_actor }}"
+
