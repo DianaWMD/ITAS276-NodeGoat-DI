@@ -12,16 +12,16 @@ jobs:
   Discord-Begin:
     runs-on: ubuntu-latest
     steps:
-    - name: Discord Notification start
-      uses: tsickert/discord-webhook@v5.3.0
-      with:
-        webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-        username: ${{github.repository}}
-        avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
-        embed-title: "Security Pipeline jobs are starting... 🚀"
-        embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-        embed-author-name: "${{ github.triggering_actor }}"
+      - name: Discord Notification start
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          username: ${{github.repository}}
+          avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
+          embed-title: "Security Pipeline jobs are starting... 🚀"
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          embed-author-name: "${{ github.triggering_actor }}"
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -33,8 +33,8 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           username: ${{github.repository}}
-          avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g 
-          content: "Build and push Docker image stage has started. #itas-276-github-alerts"
+          avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
+          embed-title: "Build and push Docker image stage has started."
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           embed-author-name: "${{ github.triggering_actor }}"
@@ -60,26 +60,26 @@ jobs:
     runs-on: ubuntu-latest
     needs: Discord-Begin
     steps:
-    # Notification for starting TruffleHog scan.
-    - name: Notify Trufflehog Scan Start
-      uses: tsickert/discord-webhook@v5.3.0
-      with:
-        webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-        username: ${{github.repository}}
-        avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g 
-        embed-title: "Starting secret scanning with TruffleHog."
-        embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-        embed-author-name: "${{ github.triggering_actor }}"
+      # Notification for starting TruffleHog scan.
+      - name: Notify Trufflehog Scan Start
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          username: ${{github.repository}}
+          avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
+          embed-title: "Starting secret scanning with TruffleHog."
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          embed-author-name: "${{ github.triggering_actor }}"
 
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Secret Scanning
-      uses: trufflesecurity/trufflehog@main
-      with:
-        extra_args: --only-verified
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Secret Scanning
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
 
   sca-snyk:
     runs-on: ubuntu-latest
@@ -138,14 +138,14 @@ jobs:
       - name: Run Semgrep for SAST
         uses: returntocorp/semgrep-action@v1
         # with:
-          # config: p/security-audit 
-          # generateSarif: "true"
+        # config: p/security-audit
+        # generateSarif: "true"
       - name: full scan
         run: |
-            semgrep \
-            --sarif --output semgrep-sast.sarif \
-            --metrics=off \
-            --config="p/default"
+          semgrep \
+          --sarif --output semgrep-sast.sarif \
+          --metrics=off \
+          --config="p/default"
 
       - name: Upload Semgrep report as pipeline artifact
         uses: actions/upload-artifact@v4
@@ -153,26 +153,25 @@ jobs:
           name: semgrep-sast.sarif
           path: semgrep-sast.sarif
 
-  # Notification with a link to download the SARIF output file.        
+  # Notification with a link to download the SARIF output file.
   notify-sarif-download:
-    needs: [sast-semgrep] 
+    needs: [sast-semgrep]
     runs-on: ubuntu-latest
     steps:
       - name: Notify SARIF Download Link
         uses: tsickert/discord-webhook@v5.3.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-          username: ${{github.repository}} 
+          username: ${{github.repository}}
           avatar-url: "https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g"
           embed-title: "Security scanning complete"
-          content: "Download the SARIF report for [semgrep-sast](${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          embed-description: "Action details and artifact download available:\n[View Action Details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\nTo download the SARIF report, please navigate to the Artifacts section in the above link."
           embed-author-name: "${{ github.triggering_actor }}"
 
   # Final notification to indicate the workflow has completed.
   notify-complete:
-    needs: [notify-sarif-download] 
+    needs: [notify-sarif-download]
     runs-on: ubuntu-latest
     steps:
       - name: Workflow Completion Notification
@@ -185,4 +184,3 @@ jobs:
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           embed-author-name: "${{ github.triggering_actor }}"
-
