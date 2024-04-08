@@ -154,28 +154,25 @@ jobs:
           path: semgrep-sast.sarif
 
   # Notification with a link to download the SARIF output file.        
-  fetch-and-post-artifact-link:
-    runs-on: ubuntu-latest
+  notify-sarif-download:
     needs: [sast-semgrep] 
+    runs-on: ubuntu-latest
     steps:
-      - name: Fetch Artifact URL
-        id: fetch_artifact
-        run: |
-          ARTIFACTS_JSON=$(curl -s -H "Authorization: token ${{ secrets.TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts")
-          ARTIFACT_URL=$(echo $ARTIFACTS_JSON | jq -r '.artifacts[0].archive_download_url')
-          echo "::set-output name=ARTIFACT_URL::$ARTIFACT_URL"
-
-      - name: Post Artifact Link to Discord
-        if: steps.fetch_artifact.outputs.ARTIFACT_URL != ''
-        run: |
-          curl -H "Content-Type: application/json" \
-               -d "{\"content\": \"Here is the latest artifact: ${steps.fetch_artifact.outputs.ARTIFACT_URL}\"}" \
-               ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Notify SARIF Download Link
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          username: ${{github.repository}} 
+          avatar-url: "https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g"
+          embed-title: "Security scanning complete"
+          content: "Download the SARIF report for [semgrep-sast](${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)"
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          embed-author-name: "${{ github.triggering_actor }}"
 
   # Final notification to indicate the workflow has completed.
   notify-complete:
-    needs: [fetch-and-post-artifact-link] 
+    needs: [notify-sarif-download] 
     runs-on: ubuntu-latest
     steps:
       - name: Workflow Completion Notification
